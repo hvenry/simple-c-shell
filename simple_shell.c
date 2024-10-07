@@ -1,84 +1,15 @@
-#include <sys/wait.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <sys/wait.h> // waitpid()
+#include <unistd.h> // chdir() fork() exec() pid_t()
+
+#include <stdio.h> // fprintf(), printf(), getchar(), perror(), stderr
+#include <stdlib.h>  // malloc(), realloc(), free(), exit(), execvp(), EXIT_SUCCESS, EXIT_FAILURE
+#include <string.h> // strcmp(), strtok()
+#include "builtins/builtin.h"
 
 #define SIMPLE_SHELL_RL_BUFSIZE 1024
 #define SIMPLE_SHELL_TOK_BUFSIZE 64
 #define SIMPLE_SHELL_TOK_DELIM " \t\r\n\a"
 
-// Function Declarations for built-in shell commands:
-// Fowward declaration: something is declared but not defiend, we do this to break the
-// dependancy cycle of simple_shell_help() using array of builtinss containing simple_shell_help()
-int simple_shell_cd(char **args);
-int simple_shell_help(char **args);
-int simple_shell_exit(char **args);
-
-// List of built-in commands, followed by their corresponding functions.
-char *builtin_str[] = {
-  "cd",
-  "help",
-  "exit"
-};
-
-// Array of function pointers that take array of strings and return int
-int (*builtin_func[]) (char **) = {
-  &simple_shell_cd,
-  &simple_shell_help,
-  &simple_shell_exit
-};
-
-// Our number of builtins
-int simple_shell_num_builtins() {
-  return sizeof(builtin_str) / sizeof(char *);
-}
-
-/* Built-in function implementations */
-
-// cd function
-int simple_shell_cd(char **args) {
-  // cd first checks if second argument exists
-  if (args[1] == NULL) {
-    fprintf(stderr, "simple_shell: expected argument to \"cd\"\n");
-  }
-  // call chdr() and check for errors
-  else {
-    if (chdir(args[1]) != 0) {
-      perror("simple_shell");
-    }
-  }
-  return 1;
-}
-
-// help function
-int simple_shell_help(char **args) {
-  printf("\n");
-  printf(
-    "   _  _ __   __ ___  _  _  ___ __   __       ___  ___  __  __  ___  _     ___        ___  _  _  ___  _     _    \n"
-    "  | || |\\ \\ / /| __|| \\| || _ \\\\ \\ / /      / __||_ _||  \\/  || _ \\| |   | __|      / __|| || || __|| |   | |   \n"
-    "  | __ | \\   / | _| | .  ||   / \\   /       \\__ \\ | | | |\\/| ||  _/| |__ | _|       \\__ \\| __ || _| | |__ | |__ \n"
-    "  |_||_|  \\_/  |___||_|\\_||_|_\\  |_|        |___/|___||_|  |_||_|  |____||___|      |___/|_||_||___||____||____|\n"
-  );
-  printf("\n");
-
-
-  printf("Forked From: Stephen Brennan's lsh\n\n\n");
-  printf("Type program names and arguments, and hit enter.\n\n");
-  printf("The following are built in:\n");
-
-  for (int i = 0; i < simple_shell_num_builtins(); i++) {
-    printf("  %s\n", builtin_str[i]);
-  }
-
-  printf("\nUse the man command for information on other programs.\n");
-  return 1;
-}
-
-// Exit function that returns 0, which 
-int simple_shell_exit(char **args) {
-  return 0;
-}
 
 // Function to launch a program with the list of tokens
 int simple_shell_launch(char **args) {
@@ -107,6 +38,10 @@ int simple_shell_launch(char **args) {
       // parent process needs wait for childs command to finish running
       // waitpid() waits for the process's state to change to either exited or killed
       wpid = waitpid(pid, &status, WUNTRACED);
+      if (wpid == -1) {
+        perror("waitpid failed");
+        break;
+      }
     // do this until WIFEXITED: process exited, or WIFSIGNALED: process terminated
     } while (!WIFEXITED(status) && !WIFSIGNALED(status));
   }
@@ -220,8 +155,15 @@ void simple_shell_loop(void) {
   do {
     // print a prompt
     printf("> ");
+
     // Read: Read in a line
     line = simple_shell_read_line();
+  
+    // add line to history
+    if (line) {
+      add_to_history(line);
+    }
+
     // Parse: Split line into arguments
     args = simple_shell_split_line(line);
     // Execute: Execute the args, and set status to see if we should exit or not
