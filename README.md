@@ -1,42 +1,29 @@
 # Simple C Shell
 
-![screenshot](screenshots/simple-c-shell.png?raw=true "Simple C Shell")
+A minimal Unix shell in C that reads, parses, and executes commands, with `cd`, `help`, `exit`, and `history` builtins.
 
-## Built-in Commands:
-- `cd`: Change the current directory.
-- `help`: Display information about the shell and built-in commands.
-- `exit`: Exit the shell.
-- `history`: View the list of previously executed commands during the current session.
+![Simple C Shell running help](screenshots/simple-c-shell.png?raw=true "Simple C Shell")
 
-## External Command Execution:
+## Why
+Built to understand what a shell actually does under the hood: the read-parse-execute loop, `fork`/`execvp`/`waitpid`, and why some commands must run inside the shell process.
+It is deliberately small, so every stage fits in one readable function.
+Based on Stephen Brennan's [Write a Shell in C](https://brennan.io/2015/01/16/write-a-shell-in-c/).
 
-Supports executing any external command available in the system's PATH, such as `ls`, `pwd`, `echo`, etc.
-  
-## Getting Started
+## Quick start
+Needs a C compiler and a Unix-like OS (Linux or macOS).
+```bash
+git clone git@github.com:hvenry/simple-c-shell.git
+cd simple-c-shell
+make
+./simple_shell
+```
+Type `help` for the builtins and `exit` to quit.
 
-### Prerequisites
+## Docs
+- [Command loop](docs/command-loop.md) - how a line becomes a builtin call or a child process, and current limits
+- [Builtins](docs/builtins.md) - what each builtin does and how to add one
+- [AGENTS.md](AGENTS.md) - commands, conventions, and the full docs index
 
-- **C Compiler**: You need `GCC`, `Clang`, or any other C compiler to build the shell.
-- **Unix-like Environment**: This shell is designed to work on Unix-like systems (Linux, macOS).
-
-### Setup
-
-1. **Clone the Repository**:
-   ```bash
-   git clone git@github.com:hvenry/simple-c-shell.git
-   ```
-2. **CD into root of repo**:
-   ```bash
-   cd simple-c-shell
-   ```
-3. **Run the Makefile**:
-   ```bash
-   make
-   ```
-4. **Start the shell**:
-   ```bash
-   ./simple_shell
-   ```
-By now you should be using the shell, type `help` for a list of commands and `exit` to terminate the shell. Enjoy!
-
-[Credit](https://brennan.io/2015/01/16/write-a-shell-in-c/)
+## Status
+Learning project, not a daily-driver shell: no pipes, redirection, quoting, or signal handling.
+Ctrl-D does not exit yet (use `exit`); a test suite and that fix are planned in [docs/specs/test-suite.md](docs/specs/test-suite.md).
