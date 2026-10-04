@@ -3,10 +3,12 @@
 The read-parse-execute loop that turns a line of input into a builtin call or a child process.
 
 ## Why
+
 This is the whole shell: without it there is no prompt, no parsing, and no way to run programs.
 Keeping each stage in its own function makes it possible to test and extend one stage (for example, a real tokenizer) without touching the others.
 
 ## How it works
+
 `main` calls `simple_shell_loop`, which repeats until a builtin returns 0.
 
 ```mermaid
@@ -31,14 +33,17 @@ flowchart LR
 5. The loop frees the line and the token array (tokens point into the line, so they are not freed individually).
 
 ## Tech
+
 - POSIX `fork`, `execvp`, `waitpid` from `<unistd.h>` and `<sys/wait.h>`.
 - libc `strtok`, `malloc`, `realloc`.
 
 ## Key files
+
 - `simple_shell.c` - all four stages plus `main`.
 - `builtins/builtin.h` - the dispatch table the execute stage consults.
 
 ## Decisions and gotchas
+
 - **EOF never exits.** `read_line` returns an empty string on EOF, so piped input or Ctrl-D loops forever printing `> `. Non-interactive runs must end with `exit`.
 - **No quoting, pipes, redirection, globbing, or variable expansion.** Tokens are whitespace-separated words; `echo "a b"` passes `"a` and `b"`.
 - **No signal handling.** Ctrl-C reaches the shell itself and kills it, not just the child.
@@ -48,4 +53,5 @@ flowchart LR
 - `getchar` is used instead of `getline` to show manual buffer growth; `getline` would be shorter and is the obvious swap.
 
 ## Related
+
 - [Builtins](builtins.md)

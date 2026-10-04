@@ -5,15 +5,18 @@
 `make test` and `make lint` exist, run locally and in CI, and catch regressions in parsing, builtins, and process launching.
 
 ## Goal
+
 There is no automated check today; the only verification is running the shell by hand.
 Known bugs (EOF loops forever, `make clean` is broken) went unnoticed because nothing exercises them.
 Success: every change runs unit tests, end-to-end tests, sanitizers, and strict compiler warnings, locally and on every push.
 
 ## Scope
+
 - In: unit tests for pure functions, end-to-end tests driving the binary over stdin, strict warnings, formatting check, sanitizer build, GitHub Actions on Linux and macOS, regression tests and fixes for the two known bugs.
 - Out: new shell features (pipes, quoting, signals), coverage thresholds.
 
 ## Design
+
 **Testable units.** Move `main` from `simple_shell.c` into `main.c` so tests can link the rest without a duplicate `main`.
 Expose `simple_shell_split_line` and `simple_shell_execute` through a new `simple_shell.h`.
 
@@ -25,6 +28,7 @@ Each test is wrapped in `timeout` so an infinite loop fails instead of hanging.
 Cases: external command, unknown command error, `cd` then `pwd`, `cd` with no args, `help` lists every builtin, `history` numbering, `exit`, EOF exits cleanly.
 
 **Lint.**
+
 - `CFLAGS` gains `-Wextra -Werror -std=c11 -pedantic` (fix the unused-parameter warnings in `exit.c`, `history.c`, and `main`).
 - `.clang-format` checked with `clang-format --dry-run --Werror`.
 - `make sanitize` builds with `-fsanitize=address,undefined` and the test targets run against it.
@@ -34,6 +38,7 @@ Cases: external command, unknown command error, `cd` then `pwd`, `cd` with no ar
 **CI.** `.github/workflows/ci.yml` runs `make lint` and `make test` on `ubuntu-latest` and `macos-latest`.
 
 ## Tasks
+
 - [ ] Add `bats` E2E test for EOF; confirm it fails (times out) on current code.
 - [ ] Fix EOF handling in `simple_shell_read_line` / loop so EOF exits with status 0; test passes.
 - [ ] Fix `make clean` and refactor `Makefile` to `OBJS` plus a pattern rule.
@@ -45,6 +50,7 @@ Cases: external command, unknown command error, `cd` then `pwd`, `cd` with no ar
 - [ ] Add GitHub Actions workflow; green on both OSes.
 
 ## Done when
+
 - [ ] `make lint` and `make test` pass locally and in CI on Linux and macOS.
 - [ ] EOF regression test and `make clean` both pass.
 - [ ] `docs/testing.md` written from the docs template; `docs/command-loop.md` gotchas updated for the EOF fix.
@@ -52,9 +58,11 @@ Cases: external command, unknown command error, `cd` then `pwd`, `cd` with no ar
 - [ ] This spec deleted and removed from the Planned index.
 
 ## Open questions
+
 - LeakSanitizer is unsupported on Apple Silicon; run leak checks only in the Linux CI job? Default: yes, macOS runs ASan without `detect_leaks`.
 - Call `free_history` on exit so leak checks are clean, or suppress it? Default: call it.
 
 ## Related
+
 - [Command loop](../command-loop.md)
 - [Builtins](../builtins.md)
